@@ -6,8 +6,29 @@ import "com/vamsi3/android/screentranslator/core/datastore/user_translate_app_pr
 option java_package = "com.vamsi3.android.screentranslator.core.datastore";
 option java_multiple_files = true;
 
+enum TileActionMode {
+    TILE_ACTION_UNSPECIFIED = 0;
+    TILE_ACTION_SCREENSHOT = 1;
+    TILE_ACTION_TOGGLE_BUBBLE = 2;
+}
+
+enum TranslatorDismissAction {
+    TRANSLATOR_DISMISS_UNSPECIFIED = 0;
+    TRANSLATOR_DISMISS_NOTHING = 1;
+    TRANSLATOR_DISMISS_GO_BACK = 2;
+    TRANSLATOR_DISMISS_GO_HOME = 3;
+    TRANSLATOR_DISMISS_KILL_APP = 4;
+}
+
 message UserPreferencesProto {
     int32 notification_shade_collapse_delay_milliseconds = 2;
     UserThemePreferenceProto user_theme_preference = 3;
     UserTranslateAppPreferenceProto user_translate_app_preference = 4;
+    string bubble_background_color = 5;
+    string bubble_border_color = 6;
+    int32 bubble_size_dp = 7;
+    TileActionMode tile_action_mode = 8;
+    bool bubble_snap_to_edge = 9;
+    TranslatorDismissAction translator_dismiss_action = 10;
+    string bubble_icon_color = 11;
 }

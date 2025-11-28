@@ -9,6 +9,10 @@ android {
         consumerProguardFiles("consumer-proguard-rules.pro")
     }
     namespace = "com.vamsi3.android.screentranslator.core.datastore"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
 
 // Setup protobuf configuration, generating lite Java and Kotlin classes

@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.datastore.core.DataStore
 import com.vamsi3.android.screentranslator.core.data.model.ThemeMode
 import com.vamsi3.android.screentranslator.core.data.model.TranslateApp
+import com.vamsi3.android.screentranslator.core.data.model.TranslatorDismissAction
 import com.vamsi3.android.screentranslator.core.data.model.UserData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,6 +38,29 @@ class UserPreferencesDataSource @Inject constructor(
 
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE -> TranslateApp.DEEPL_TRANSLATE
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO -> TranslateApp.NAVER_PAPAGO
+                },
+                bubbleBackgroundColor = it.bubbleBackgroundColor.ifEmpty { "#00000000" },
+                bubbleBorderColor = it.bubbleBorderColor.ifEmpty { "#4CAF50" },
+                bubbleIconColor = it.bubbleIconColor.ifEmpty { "#FFFFFF" },
+                bubbleSizeDp = if (it.bubbleSizeDp > 0) it.bubbleSizeDp else 56,
+                bubbleSnapToEdge = it.bubbleSnapToEdge,
+                tileActionMode = when(it.tileActionMode) {
+                    null,
+                    com.vamsi3.android.screentranslator.core.datastore.TileActionMode.UNRECOGNIZED,
+                    com.vamsi3.android.screentranslator.core.datastore.TileActionMode.TILE_ACTION_UNSPECIFIED,
+                    com.vamsi3.android.screentranslator.core.datastore.TileActionMode.TILE_ACTION_SCREENSHOT ->
+                        com.vamsi3.android.screentranslator.core.data.model.TileActionMode.SCREENSHOT
+                    com.vamsi3.android.screentranslator.core.datastore.TileActionMode.TILE_ACTION_TOGGLE_BUBBLE ->
+                        com.vamsi3.android.screentranslator.core.data.model.TileActionMode.TOGGLE_BUBBLE
+                },
+                translatorDismissAction = when(it.translatorDismissAction) {
+                    com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_GO_BACK ->
+                        TranslatorDismissAction.GO_BACK
+                    com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_GO_HOME ->
+                        TranslatorDismissAction.GO_HOME
+                    com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_KILL_APP ->
+                        TranslatorDismissAction.KILL_APP
+                    else -> TranslatorDismissAction.NOTHING
                 },
             )
         }
@@ -74,6 +98,76 @@ class UserPreferencesDataSource @Inject constructor(
                     TranslateApp.DEEPL_TRANSLATE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE
                     TranslateApp.GOOGLE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_GOOGLE
                     TranslateApp.NAVER_PAPAGO -> UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO
+                }
+            }
+        }
+    }
+
+    suspend fun setBubbleBackgroundColor(color: String) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubbleBackgroundColor = color
+            }
+        }
+    }
+
+    suspend fun setBubbleBorderColor(color: String) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubbleBorderColor = color
+            }
+        }
+    }
+
+    suspend fun setBubbleIconColor(color: String) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubbleIconColor = color
+            }
+        }
+    }
+
+    suspend fun setBubbleSizeDp(sizeDp: Int) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubbleSizeDp = sizeDp
+            }
+        }
+    }
+
+    suspend fun setBubbleSnapToEdge(snapToEdge: Boolean) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubbleSnapToEdge = snapToEdge
+            }
+        }
+    }
+
+    suspend fun setTileActionMode(mode: com.vamsi3.android.screentranslator.core.data.model.TileActionMode) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.tileActionMode = when (mode) {
+                    com.vamsi3.android.screentranslator.core.data.model.TileActionMode.SCREENSHOT ->
+                        com.vamsi3.android.screentranslator.core.datastore.TileActionMode.TILE_ACTION_SCREENSHOT
+                    com.vamsi3.android.screentranslator.core.data.model.TileActionMode.TOGGLE_BUBBLE ->
+                        com.vamsi3.android.screentranslator.core.datastore.TileActionMode.TILE_ACTION_TOGGLE_BUBBLE
+                }
+            }
+        }
+    }
+
+    suspend fun setTranslatorDismissAction(action: TranslatorDismissAction) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.translatorDismissAction = when (action) {
+                    TranslatorDismissAction.NOTHING ->
+                        com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_NOTHING
+                    TranslatorDismissAction.GO_BACK ->
+                        com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_GO_BACK
+                    TranslatorDismissAction.GO_HOME ->
+                        com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_GO_HOME
+                    TranslatorDismissAction.KILL_APP ->
+                        com.vamsi3.android.screentranslator.core.datastore.TranslatorDismissAction.TRANSLATOR_DISMISS_KILL_APP
                 }
             }
         }

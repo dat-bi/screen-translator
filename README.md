@@ -1,3 +1,57 @@
+# phamd's Fork
+
+This is a fork with additional features listed below.
+
+<table style="border: none; border-collapse: collapse;">
+<tr style="border: none;">
+<td valign="top" width="65%" style="border: none;">
+
+### Floating Bubble
+- Added floating bubble overlay as an alternative to the Quick Settings tile
+- Tap bubble to translate, long-press to open settings
+- Drag to reposition anywhere on screen
+- Bubble Customization (size, colour, snap)
+
+### Translator Dismiss Action
+- Configurable action when bubble is tapped while translator is open:
+  - Nothing - take another screenshot
+  - Go Back - press back button
+  - Go Home - return to home screen
+  - Close Translator - kill then return home
+- Requires "Usage Access" permission if enabled
+
+### Settings UI Improvements
+- Reorganized settings layout with descriptions
+- Proper Material 3 dropdown menus
+
+</td>
+<td width="35%" align="center" valign="middle" style="border: none;">
+<img src="docs/Settings_Bubble.webp">
+</td>
+</tr>
+<tr style="border: none;">
+<td valign="top" style="border: none;">
+
+### Quick Settings Tile
+- Tile action mode selection:
+  - Take Screenshot - capture and translate (default)
+  - Toggle Bubble - show/hide the floating bubble
+- "Add Tile" button to add the tile instead of forced prompt
+
+</td>
+<td align="center" valign="middle" style="border: none;">
+<img src="docs/Settings_QuickTile.webp">
+</td>
+</tr>
+</table>
+
+---
+
+> [!NOTE]
+> **Below is the original project documentation.**
+
+---
+
 # Screen Translator
 
 > This Android app is a Quick Setting tile to translate the current screen using Naver Papago (네이버 파파고) / Google Lens app.

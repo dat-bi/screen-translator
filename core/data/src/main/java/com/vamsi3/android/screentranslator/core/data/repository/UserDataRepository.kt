@@ -14,4 +14,18 @@ interface UserDataRepository {
     suspend fun setTranslateApp(translateApp: TranslateApp)
 
     suspend fun setNotificationShadeCollapseDelayDuration(notificationShadeCollapseDelayDuration: Duration)
+
+    suspend fun setBubbleBackgroundColor(color: String)
+
+    suspend fun setBubbleBorderColor(color: String)
+
+    suspend fun setBubbleIconColor(color: String)
+
+    suspend fun setBubbleSizeDp(sizeDp: Int)
+
+    suspend fun setBubbleSnapToEdge(snapToEdge: Boolean)
+
+    suspend fun setTileActionMode(mode: com.vamsi3.android.screentranslator.core.data.model.TileActionMode)
+
+    suspend fun setTranslatorDismissAction(action: com.vamsi3.android.screentranslator.core.data.model.TranslatorDismissAction)
 }

@@ -1,35 +1,65 @@
 package com.vamsi3.android.screentranslator.feature.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vamsi3.android.screentranslator.core.data.model.ThemeMode
+import com.vamsi3.android.screentranslator.core.data.model.TileActionMode
 import com.vamsi3.android.screentranslator.core.data.model.TranslateApp
+import com.vamsi3.android.screentranslator.core.data.model.TranslatorDismissAction
 import com.vamsi3.android.screentranslator.core.design.theme.ScreenTranslatorTheme
 import com.vamsi3.android.screentranslator.core.design.util.ThemePreviews
 import com.vamsi3.android.screentranslator.feature.settings.SettingsUiState.Success
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    isBubbleRunning: Boolean,
+    onBubbleToggle: (Boolean) -> Unit,
+    onBubbleRestart: () -> Unit,
+    onRequestAddTile: () -> Unit,
 ) {
     val settingsUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     if (settingsUiState is Success) {
         SettingsContent(
             settingsData = (settingsUiState as Success).settingsData,
-            onChangeThemeMode = viewModel::setThemeMode,
+            isBubbleRunning = isBubbleRunning,
+            onBubbleToggle = onBubbleToggle,
+            onBubbleRestart = onBubbleRestart,
             onChangeTranslateApp = viewModel::setTranslateApp,
+            onChangeThemeMode = viewModel::setThemeMode,
             onChangeNotificationShadeCollapseDelayDuration = viewModel::setNotificationShadeCollapseDelayDuration,
+            onChangeBubbleSizeDp = viewModel::setBubbleSizeDp,
+            onChangeBubbleBackgroundColor = viewModel::setBubbleBackgroundColor,
+            onChangeBubbleBorderColor = viewModel::setBubbleBorderColor,
+            onChangeBubbleIconColor = viewModel::setBubbleIconColor,
+            onChangeBubbleSnapToEdge = viewModel::setBubbleSnapToEdge,
+            onChangeTileActionMode = viewModel::setTileActionMode,
+            onChangeTranslatorDismissAction = viewModel::setTranslatorDismissAction,
+            onRequestAddTile = onRequestAddTile,
         )
     }
 }
@@ -37,74 +67,65 @@ fun SettingsScreen(
 @Composable
 fun SettingsContent(
     settingsData: SettingsData,
-    onChangeThemeMode: (ThemeMode) -> Unit,
+    isBubbleRunning: Boolean,
+    onBubbleToggle: (Boolean) -> Unit,
+    onBubbleRestart: () -> Unit,
     onChangeTranslateApp: (TranslateApp) -> Unit,
+    onChangeThemeMode: (ThemeMode) -> Unit,
     onChangeNotificationShadeCollapseDelayDuration: (Long) -> Unit,
+    onChangeBubbleSizeDp: (Int) -> Unit,
+    onChangeBubbleBackgroundColor: (String) -> Unit,
+    onChangeBubbleBorderColor: (String) -> Unit,
+    onChangeBubbleIconColor: (String) -> Unit,
+    onChangeBubbleSnapToEdge: (Boolean) -> Unit,
+    onChangeTileActionMode: (TileActionMode) -> Unit,
+    onChangeTranslatorDismissAction: (TranslatorDismissAction) -> Unit,
+    onRequestAddTile: () -> Unit,
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp),
     ) {
-        ThemeSetting(
-            themeMode = settingsData.themeMode,
-            onChangeThemeMode = onChangeThemeMode
-        )
+        // 1. Translate App (top)
         TranslateAppSetting(
             translateApp = settingsData.translateApp,
             onChangeTranslateApp = onChangeTranslateApp
         )
-        NotificationShadeCollapseSetting(
-            settingsData.notificationShadeCollapseDelayDuration,
-            onChangeNotificationShadeCollapseDelayDuration,
+
+        // 2. Floating Bubble (toggle + customization)
+        FloatingBubbleSection(
+            isBubbleRunning = isBubbleRunning,
+            onBubbleToggle = onBubbleToggle,
+            bubbleSizeDp = settingsData.bubbleSizeDp,
+            backgroundColor = settingsData.bubbleBackgroundColor,
+            borderColor = settingsData.bubbleBorderColor,
+            iconColor = settingsData.bubbleIconColor,
+            snapToEdge = settingsData.bubbleSnapToEdge,
+            translatorDismissAction = settingsData.translatorDismissAction,
+            onChangeBubbleSizeDp = onChangeBubbleSizeDp,
+            onChangeBackgroundColor = onChangeBubbleBackgroundColor,
+            onChangeBorderColor = onChangeBubbleBorderColor,
+            onChangeIconColor = onChangeBubbleIconColor,
+            onChangeSnapToEdge = onChangeBubbleSnapToEdge,
+            onChangeTranslatorDismissAction = onChangeTranslatorDismissAction,
+            onBubbleRestart = onBubbleRestart
         )
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ThemeSetting(
-    themeMode: ThemeMode,
-    onChangeThemeMode: (ThemeMode) -> Unit,
-) {
-    val (openDialog, setOpenDialog) = remember { mutableStateOf(false) }
+        // 4. Quick Settings Tile Action
+        TileActionModeSetting(
+            tileActionMode = settingsData.tileActionMode,
+            onChangeTileActionMode = onChangeTileActionMode,
+            onRequestAddTile = onRequestAddTile,
+            screenshotDelay = settingsData.notificationShadeCollapseDelayDuration,
+            onChangeScreenshotDelay = onChangeNotificationShadeCollapseDelayDuration
+        )
 
-    ThemeModeDialog(
-        openDialog = openDialog,
-        setOpenDialog = setOpenDialog,
-        themeMode = themeMode,
-        onChangeThemeMode = onChangeThemeMode
-    )
-
-    Surface(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth(),
-        tonalElevation = 4.dp,
-        shadowElevation = 8.dp,
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text("Theme", style = MaterialTheme.typography.titleMedium)
-            Button(
-                onClick = {
-                    setOpenDialog(true)
-                },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .height(48.dp),
-            ) {
-                Text(themeMode.modeName)
-            }
-        }
+        // 6. Theme (bottom)
+        ThemeSetting(
+            themeMode = settingsData.themeMode,
+            onChangeThemeMode = onChangeThemeMode
+        )
     }
 }
 
@@ -114,14 +135,7 @@ fun TranslateAppSetting(
     translateApp: TranslateApp,
     onChangeTranslateApp: (TranslateApp) -> Unit,
 ) {
-    val (openDialog, setOpenDialog) = remember { mutableStateOf(false) }
-
-    TranslateAppDialog(
-        openDialog = openDialog,
-        setOpenDialog = setOpenDialog,
-        translateApp = translateApp,
-        onChangeTranslateApp = onChangeTranslateApp
-    )
+    var expanded by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier
@@ -133,132 +147,730 @@ fun TranslateAppSetting(
     ) {
         Row(
             modifier = Modifier
-                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp)
+                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 8.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("Translate App", style = MaterialTheme.typography.titleMedium)
-            Button(
-                onClick = {
-                    setOpenDialog(true)
-                },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                    .height(48.dp),
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Translate App", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Select which translation app to use",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it }
             ) {
-                Text(translateApp.appName)
+                OutlinedTextField(
+                    value = translateApp.appName,
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .width(160.dp),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    TranslateApp.values().forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.appName) },
+                            onClick = {
+                                onChangeTranslateApp(option)
+                                expanded = false
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-@ExperimentalMaterial3Api
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThemeModeDialog(
-    openDialog: Boolean,
-    setOpenDialog: (Boolean) -> Unit,
-    themeMode: ThemeMode,
-    onChangeThemeMode: (ThemeMode) -> Unit,
+fun FloatingBubbleSection(
+    isBubbleRunning: Boolean,
+    onBubbleToggle: (Boolean) -> Unit,
+    bubbleSizeDp: Int,
+    backgroundColor: String,
+    borderColor: String,
+    iconColor: String,
+    snapToEdge: Boolean,
+    translatorDismissAction: TranslatorDismissAction,
+    onChangeBubbleSizeDp: (Int) -> Unit,
+    onChangeBackgroundColor: (String) -> Unit,
+    onChangeBorderColor: (String) -> Unit,
+    onChangeIconColor: (String) -> Unit,
+    onChangeSnapToEdge: (Boolean) -> Unit,
+    onChangeTranslatorDismissAction: (TranslatorDismissAction) -> Unit,
+    onBubbleRestart: () -> Unit,
 ) {
-    if (openDialog) {
-        AlertDialog(
-            modifier = Modifier.fillMaxWidth(0.9f),
-            shape = RoundedCornerShape(16.dp),
-            onDismissRequest = {
-                setOpenDialog(false)
-            },
-            title = {
-                Text(text = "Theme")
-            },
-            text = {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Column {
+            // Top row: Toggle
+            Row(
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 12.dp, bottom = 8.dp, end = 8.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Floating Bubble", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Show draggable translation button on screen",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = isBubbleRunning,
+                    onCheckedChange = onBubbleToggle,
+                    thumbContent = {
+                        Text(
+                            text = if (isBubbleRunning) "ON" else "OFF",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(2.dp)
+                        )
+                    }
+                )
+            }
+
+            // Customization header (clickable to expand)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Customize Bubble",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        "Size, colours, and behaviour",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    )
+                }
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Expandable customization content
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
                 Column(
-                    modifier = Modifier
-                        .selectableGroup()
-                        .padding(start = 16.dp, top = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    ThemeMode.values().forEach { themeModeOption ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = (themeModeOption == themeMode),
-                                    onClick = { onChangeThemeMode(themeModeOption) },
-                                    role = Role.RadioButton
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            RadioButton(
-                                selected = (themeModeOption == themeMode),
-                                onClick = null
-                            )
+                    // Bubble Size
+                    BubbleSizeControl(
+                        bubbleSizeDp = bubbleSizeDp,
+                        onChangeBubbleSizeDp = { size ->
+                            onChangeBubbleSizeDp(size)
+                            if (isBubbleRunning) onBubbleRestart()
+                        }
+                    )
+
+                    HorizontalDivider()
+
+                    // Background Colour
+                    BubbleColorControl(
+                        label = "Background Colour",
+                        description = "Customize bubble background",
+                        color = backgroundColor,
+                        onColorChange = { color ->
+                            onChangeBackgroundColor(color)
+                            if (isBubbleRunning) onBubbleRestart()
+                        }
+                    )
+
+                    HorizontalDivider()
+
+                    // Border Colour
+                    BubbleColorControl(
+                        label = "Border Colour",
+                        description = "Customize bubble border",
+                        color = borderColor,
+                        onColorChange = { color ->
+                            onChangeBorderColor(color)
+                            if (isBubbleRunning) onBubbleRestart()
+                        }
+                    )
+
+                    HorizontalDivider()
+
+                    // Icon Colour
+                    BubbleColorControl(
+                        label = "Icon Colour",
+                        description = "Customize bubble icon tint",
+                        color = iconColor,
+                        onColorChange = { color ->
+                            onChangeIconColor(color)
+                            if (isBubbleRunning) onBubbleRestart()
+                        }
+                    )
+
+                    HorizontalDivider()
+
+                    // Snap to Edge
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Snap to Edge", style = MaterialTheme.typography.bodyLarge)
                             Text(
-                                text = themeModeOption.modeName,
-                                style = MaterialTheme.typography.bodyLarge
+                                "Bubble snaps to screen edge after dragging",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Switch(
+                            checked = snapToEdge,
+                            onCheckedChange = onChangeSnapToEdge,
+                            thumbContent = {
+                                Text(
+                                    text = if (snapToEdge) "ON" else "OFF",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(2.dp)
+                                )
+                            }
+                        )
                     }
+
+                    HorizontalDivider()
+
+                    // Translator Dismiss Action
+                    TranslatorDismissActionControl(
+                        translatorDismissAction = translatorDismissAction,
+                        onChangeTranslatorDismissAction = onChangeTranslatorDismissAction
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-            },
-            confirmButton = {}
+            }
+        }
+    }
+}
+
+@Composable
+fun BubbleSizeControl(
+    bubbleSizeDp: Int,
+    onChangeBubbleSizeDp: (Int) -> Unit,
+) {
+    var bubbleSize by remember(bubbleSizeDp) { mutableStateOf(bubbleSizeDp.toFloat()) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Size", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "${bubbleSize.toInt()}dp",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Slider(
+            value = bubbleSize,
+            onValueChange = { bubbleSize = it },
+            onValueChangeFinished = { onChangeBubbleSizeDp(bubbleSize.toInt()) },
+            valueRange = 32f..128f,
+            steps = 23,
+            modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
 
-@ExperimentalMaterial3Api
 @Composable
-fun TranslateAppDialog(
-    openDialog: Boolean,
-    setOpenDialog: (Boolean) -> Unit,
-    translateApp: TranslateApp,
-    onChangeTranslateApp: (TranslateApp) -> Unit,
+fun BubbleColorControl(
+    label: String,
+    description: String,
+    color: String,
+    onColorChange: (String) -> Unit,
 ) {
-    if (openDialog) {
-        AlertDialog(
-            modifier = Modifier.fillMaxWidth(0.9f),
-            shape = RoundedCornerShape(16.dp),
-            onDismissRequest = {
-                setOpenDialog(false)
-            },
-            title = {
-                Text(text = "Translate App")
-            },
-            text = {
-                Column(
+    var showColorPicker by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showColorPicker = !showColorPicker },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
                     modifier = Modifier
-                        .selectableGroup()
-                        .padding(start = 16.dp, top = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(32.dp)
-                ) {
-                    TranslateApp.values().forEach { translateAppOption ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .selectable(
-                                    selected = (translateAppOption == translateApp),
-                                    onClick = { onChangeTranslateApp(translateAppOption) },
-                                    role = Role.RadioButton
-                                ),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            RadioButton(
-                                selected = (translateAppOption == translateApp),
-                                onClick = null
-                            )
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color(android.graphics.Color.parseColor(color)))
+                        .border(2.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                )
+                Icon(
+                    imageVector = if (showColorPicker) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showColorPicker,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            ColorPickerContent(
+                color = color,
+                onColorChange = onColorChange
+            )
+        }
+    }
+}
+
+@Composable
+fun ColorPickerContent(
+    color: String,
+    onColorChange: (String) -> Unit,
+) {
+    var alpha by remember { mutableStateOf(android.graphics.Color.alpha(android.graphics.Color.parseColor(color)) / 255f) }
+    var red by remember { mutableStateOf(android.graphics.Color.red(android.graphics.Color.parseColor(color)) / 255f) }
+    var green by remember { mutableStateOf(android.graphics.Color.green(android.graphics.Color.parseColor(color)) / 255f) }
+    var blue by remember { mutableStateOf(android.graphics.Color.blue(android.graphics.Color.parseColor(color)) / 255f) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(red, green, blue, alpha))
+                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+        )
+
+        ColorSlider("Alpha", alpha) {
+            alpha = it
+            val newColor = Color(red, green, blue, alpha).toArgb()
+            onColorChange(String.format("#%08X", newColor))
+        }
+        ColorSlider("Red", red) {
+            red = it
+            val newColor = Color(red, green, blue, alpha).toArgb()
+            onColorChange(String.format("#%08X", newColor))
+        }
+        ColorSlider("Green", green) {
+            green = it
+            val newColor = Color(red, green, blue, alpha).toArgb()
+            onColorChange(String.format("#%08X", newColor))
+        }
+        ColorSlider("Blue", blue) {
+            blue = it
+            val newColor = Color(red, green, blue, alpha).toArgb()
+            onColorChange(String.format("#%08X", newColor))
+        }
+    }
+}
+
+@Composable
+private fun ColorSlider(
+    label: String,
+    value: Float,
+    onValueChange: (Float) -> Unit,
+) {
+    // Track local slider value for visual feedback during drag
+    var sliderValue by remember(value) { mutableStateOf(value) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(40.dp)
+        )
+        Slider(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },  // Update local state during drag
+            onValueChangeFinished = { onValueChange(sliderValue) },  // Commit on release
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            "${(sliderValue * 255).toInt()}",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.width(30.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TranslatorDismissActionControl(
+    translatorDismissAction: TranslatorDismissAction,
+    onChangeTranslatorDismissAction: (TranslatorDismissAction) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val actionLabel = when (translatorDismissAction) {
+        TranslatorDismissAction.NOTHING -> "Nothing (translate again)"
+        TranslatorDismissAction.GO_BACK -> "Go Back"
+        TranslatorDismissAction.GO_HOME -> "Go Home"
+        TranslatorDismissAction.KILL_APP -> "Close Translator"
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("If Translator is Open", style = MaterialTheme.typography.bodyLarge)
+        Text(
+            "Action when bubble is tapped while translator app is in foreground",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                value = actionLabel,
+                onValueChange = {},
+                readOnly = true,
+                singleLine = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text("Nothing (translate again)")
                             Text(
-                                text = translateAppOption.appName,
-                                style = MaterialTheme.typography.bodyLarge
+                                "Take another screenshot",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                    },
+                    onClick = {
+                        onChangeTranslatorDismissAction(TranslatorDismissAction.NOTHING)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text("Go Back")
+                            Text(
+                                "Press back button in translator",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onChangeTranslatorDismissAction(TranslatorDismissAction.GO_BACK)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text("Go Home")
+                            Text(
+                                "Return to home screen",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onChangeTranslatorDismissAction(TranslatorDismissAction.GO_HOME)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text("Close Translator")
+                            Text(
+                                "Kill translator app and return to previous app",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    onClick = {
+                        onChangeTranslatorDismissAction(TranslatorDismissAction.KILL_APP)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TileActionModeSetting(
+    tileActionMode: TileActionMode,
+    onChangeTileActionMode: (TileActionMode) -> Unit,
+    onRequestAddTile: () -> Unit,
+    screenshotDelay: Long,
+    onChangeScreenshotDelay: (Long) -> Unit,
+) {
+    var delayDuration by remember { mutableStateOf(screenshotDelay) }
+
+    Surface(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Quick Settings Tile", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Choose what the Quick Settings tile does",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                TextButton(onClick = onRequestAddTile) {
+                    Text("Add Tile")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Screenshot option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onChangeTileActionMode(TileActionMode.SCREENSHOT) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = tileActionMode == TileActionMode.SCREENSHOT,
+                    onClick = { onChangeTileActionMode(TileActionMode.SCREENSHOT) }
+                )
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text("Take Screenshot", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Capture screen and translate text",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Toggle Bubble option
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onChangeTileActionMode(TileActionMode.TOGGLE_BUBBLE) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = tileActionMode == TileActionMode.TOGGLE_BUBBLE,
+                    onClick = { onChangeTileActionMode(TileActionMode.TOGGLE_BUBBLE) }
+                )
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text("Toggle Bubble", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        "Show or hide the floating bubble",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Screenshot Delay (only relevant for Screenshot mode)
+            if (tileActionMode == TileActionMode.SCREENSHOT) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Text(
+                    "Screenshot Delay",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    "Wait for notification shade to collapse",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Row(
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Slider(
+                        value = delayDuration.toFloat(),
+                        onValueChange = { delayDuration = it.toLong() },
+                        onValueChangeFinished = {
+                            onChangeScreenshotDelay(delayDuration)
+                        },
+                        valueRange = 0f..1000f,
+                        steps = 9,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = if (delayDuration == 0L) "Off" else "${delayDuration}ms",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (delayDuration == 0L)
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        else
+                            MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.width(60.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ThemeSetting(
+    themeMode: ThemeMode,
+    onChangeThemeMode: (ThemeMode) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Surface(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
+        tonalElevation = 4.dp,
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 8.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Theme", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Choose light, dark, or system default",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = it }
+            ) {
+                OutlinedTextField(
+                    value = themeMode.modeName,
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .width(130.dp),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    ThemeMode.values().forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.modeName) },
+                            onClick = {
+                                onChangeThemeMode(option)
+                                expanded = false
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        )
                     }
                 }
-            },
-            confirmButton = {}
-        )
+            }
+        }
     }
 }
 
@@ -275,73 +887,46 @@ fun NotificationShadeCollapseSetting(
         shadowElevation = 8.dp,
         shape = RoundedCornerShape(8.dp),
     ) {
-        var notificationShadeCollapseDelayDurationState by remember {
-            mutableStateOf(
-                notificationShadeCollapseDelayDuration
-            )
-        }
-        var isNotificationShadeCollapseEnabled by remember {
-            mutableStateOf(
-                notificationShadeCollapseDelayDurationState != 0L
-            )
-        }
+        var delayDuration by remember { mutableStateOf(notificationShadeCollapseDelayDuration) }
 
-        Column {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Text("Tile Screenshot Delay", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Wait for notification shade to collapse before screenshot",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
             Row(
                 modifier = Modifier
-                    .padding(start = 16.dp, top = 8.dp, end = 16.dp)
+                    .padding(top = 8.dp)
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Notification Shade Delay", style = MaterialTheme.typography.titleMedium)
-                Switch(
-                    modifier = Modifier.padding(0.dp),
-                    checked = isNotificationShadeCollapseEnabled,
-                    onCheckedChange = {
-                        isNotificationShadeCollapseEnabled = !isNotificationShadeCollapseEnabled
-                        onChangeNotificationShadeCollapseDelayDuration(
-                            if (isNotificationShadeCollapseEnabled) notificationShadeCollapseDelayDurationState else 0L
-                        )
-                    },
-                )
-            }
-            Row(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Slider(
-                    value = notificationShadeCollapseDelayDurationState.toFloat(),
-                    onValueChange = { notificationShadeCollapseDelayDurationState = it.toLong() },
+                    value = delayDuration.toFloat(),
+                    onValueChange = { delayDuration = it.toLong() },
                     onValueChangeFinished = {
-                        isNotificationShadeCollapseEnabled =
-                            notificationShadeCollapseDelayDurationState != 0L
-                        onChangeNotificationShadeCollapseDelayDuration(
-                            notificationShadeCollapseDelayDurationState
-                        )
+                        onChangeNotificationShadeCollapseDelayDuration(delayDuration)
                     },
                     valueRange = 0f..1000f,
                     steps = 9,
-                    modifier = Modifier
-                        .padding(vertical = 16.dp)
-                        .fillMaxWidth(0.6f),
-                    enabled = isNotificationShadeCollapseEnabled
+                    modifier = Modifier.weight(1f)
                 )
-                if (isNotificationShadeCollapseEnabled) {
-                    Surface(
-                        tonalElevation = 8.dp,
-                        shape = RoundedCornerShape(8.dp),
-                    ) {
-                        Text(
-                            "$notificationShadeCollapseDelayDurationState ms",
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 16.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = if (delayDuration == 0L) "Off" else "${delayDuration}ms",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (delayDuration == 0L)
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    else
+                        MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.width(60.dp)
+                )
             }
         }
     }
@@ -357,26 +942,28 @@ private fun SettingsPreview() {
                     themeMode = ThemeMode.SYSTEM,
                     translateApp = TranslateApp.GOOGLE,
                     notificationShadeCollapseDelayDuration = 300L,
+                    bubbleBackgroundColor = "#00000000",
+                    bubbleBorderColor = "#4CAF50",
+                    bubbleIconColor = "#FFFFFF",
+                    bubbleSizeDp = 56,
+                    bubbleSnapToEdge = true,
+                    tileActionMode = TileActionMode.SCREENSHOT,
+                    translatorDismissAction = TranslatorDismissAction.NOTHING,
                 ),
-                onChangeThemeMode = { },
-                onChangeTranslateApp = { },
-                onChangeNotificationShadeCollapseDelayDuration = { }
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@ThemePreviews
-@Composable
-private fun ThemeModeDialogPreview() {
-    ScreenTranslatorTheme {
-        Surface {
-            ThemeModeDialog(
-                openDialog = true,
-                setOpenDialog = {},
-                themeMode = ThemeMode.SYSTEM,
-                onChangeThemeMode = {}
+                isBubbleRunning = false,
+                onBubbleToggle = {},
+                onBubbleRestart = {},
+                onChangeTranslateApp = {},
+                onChangeThemeMode = {},
+                onChangeNotificationShadeCollapseDelayDuration = {},
+                onChangeBubbleSizeDp = {},
+                onChangeBubbleBackgroundColor = {},
+                onChangeBubbleBorderColor = {},
+                onChangeBubbleIconColor = {},
+                onChangeBubbleSnapToEdge = {},
+                onChangeTileActionMode = {},
+                onChangeTranslatorDismissAction = {},
+                onRequestAddTile = {},
             )
         }
     }

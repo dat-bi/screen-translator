@@ -89,7 +89,30 @@ class ScreenTranslatorAccessibilityService : AccessibilityService() {
     }
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        translateScreen()
+        Log.i("ScreenTranslatorAccessibilityService", "onStartCommand called with action: ${intent.action}")
+
+        when (intent.action) {
+            "TAKE_SCREENSHOT" -> {
+                // Direct screenshot request from bubble
+                Log.i("ScreenTranslatorAccessibilityService", "Taking screenshot from bubble")
+                takeScreenshotAndTranslate()
+            }
+            "GO_BACK" -> {
+                // Perform back action
+                Log.i("ScreenTranslatorAccessibilityService", "Performing GO_BACK action")
+                performGlobalAction(GLOBAL_ACTION_BACK)
+            }
+            "GO_HOME" -> {
+                // Perform home action
+                Log.i("ScreenTranslatorAccessibilityService", "Performing GO_HOME action")
+                performGlobalAction(GLOBAL_ACTION_HOME)
+            }
+            else -> {
+                // Original flow from tile
+                translateScreen()
+            }
+        }
+
         stopSelf(startId)
         return START_NOT_STICKY
     }
