@@ -3,6 +3,7 @@
     <string name="app_name">Screen Translator</string>
 
     <string name="enable_screen_translator">Enable \'Screen Translator\'</string>
+    <string name="android_11_required_for_screenshot">Screen translation requires Android 11 or newer</string>
     <string name="translation_failed">Translation failed</string>
     <string name="translate_tile_label">Screen Translator</string>
 

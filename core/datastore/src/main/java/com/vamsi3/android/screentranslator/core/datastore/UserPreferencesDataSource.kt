@@ -38,12 +38,15 @@ class UserPreferencesDataSource @Inject constructor(
 
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE -> TranslateApp.DEEPL_TRANSLATE
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO -> TranslateApp.NAVER_PAPAGO
+                    UserTranslateAppPreferenceProto.TRANSLATE_APP_BAIDU_TRANSLATE -> TranslateApp.BAIDU_TRANSLATE
                 },
                 bubbleBackgroundColor = it.bubbleBackgroundColor.ifEmpty { "#00000000" },
                 bubbleBorderColor = it.bubbleBorderColor.ifEmpty { "#4CAF50" },
                 bubbleIconColor = it.bubbleIconColor.ifEmpty { "#FFFFFF" },
                 bubbleSizeDp = if (it.bubbleSizeDp > 0) it.bubbleSizeDp else 56,
                 bubbleSnapToEdge = it.bubbleSnapToEdge,
+                bubblePositionX = it.bubblePositionX,
+                bubblePositionY = if (it.bubblePositionY > 0) it.bubblePositionY else 100,
                 tileActionMode = when(it.tileActionMode) {
                     null,
                     com.vamsi3.android.screentranslator.core.datastore.TileActionMode.UNRECOGNIZED,
@@ -95,6 +98,7 @@ class UserPreferencesDataSource @Inject constructor(
         userPreferencesProto.updateData {
             it.copy {
                 this.userTranslateAppPreference = when (translateApp) {
+                    TranslateApp.BAIDU_TRANSLATE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_BAIDU_TRANSLATE
                     TranslateApp.DEEPL_TRANSLATE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE
                     TranslateApp.GOOGLE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_GOOGLE
                     TranslateApp.NAVER_PAPAGO -> UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO
@@ -139,6 +143,15 @@ class UserPreferencesDataSource @Inject constructor(
         userPreferencesProto.updateData {
             it.copy {
                 this.bubbleSnapToEdge = snapToEdge
+            }
+        }
+    }
+
+    suspend fun setBubblePosition(x: Int, y: Int) {
+        userPreferencesProto.updateData {
+            it.copy {
+                this.bubblePositionX = x
+                this.bubblePositionY = y
             }
         }
     }

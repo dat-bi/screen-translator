@@ -5,6 +5,7 @@ enum class TranslateApp(
     val packageName: String,
     val imageTranslateActivity: String,
 ) {
+    BAIDU_TRANSLATE("Baidu Translate", "com.baidu.baidutranslate", ""),
     DEEPL_TRANSLATE("DeepL Translate", "com.deepl.mobiletranslator", "com.deepl.mobiletranslator.MainActivity"),
     GOOGLE("Google", "com.google.android.googlequicksearchbox", "com.google.android.apps.search.lens.LensShareEntryPointActivity"),
 //    GOOGLE_LENS("Google Lens", "com.google.ar.lens", "com.google.vr.apps.ornament.app.lens.LensLauncherActivity"),

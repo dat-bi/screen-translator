@@ -67,6 +67,7 @@ class BubbleOverlayService : Service() {
 
         // Translator app package names
         private val TRANSLATOR_PACKAGES = setOf(
+            "com.baidu.baidutranslate", // Baidu Translate
             "com.google.android.apps.translate", // Google Translate
             "com.google.ar.lens", // Google Lens (standalone)
             "com.google.android.googlequicksearchbox", // Google app (includes Lens)
@@ -176,8 +177,8 @@ class BubbleOverlayService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 0
-            y = 100
+            x = clampX(userData?.bubblePositionX ?: 0, sizePx)
+            y = clampY(userData?.bubblePositionY ?: 100, sizePx)
         }
 
         windowManager.addView(bubbleView, layoutParams)
@@ -228,6 +229,8 @@ class BubbleOverlayService : Service() {
                             // Snap to edge after dragging (if enabled)
                             if (shouldSnapToEdge) {
                                 snapToEdge()
+                            } else {
+                                persistBubblePosition()
                             }
                         } else {
                             if (pressDuration >= longPressThreshold) {
@@ -310,6 +313,31 @@ class BubbleOverlayService : Service() {
         // Update immediately for smoother feel
         layoutParams.x = targetX
         windowManager.updateViewLayout(bubbleView, layoutParams)
+        persistBubblePosition()
+    }
+
+    private fun persistBubblePosition() {
+        val bubbleSize = bubbleView?.width ?: layoutParams.width
+        val safeX = clampX(layoutParams.x, bubbleSize)
+        val safeY = clampY(layoutParams.y, bubbleSize)
+
+        layoutParams.x = safeX
+        layoutParams.y = safeY
+        windowManager.updateViewLayout(bubbleView, layoutParams)
+
+        serviceScope.launch {
+            userDataRepository.setBubblePosition(safeX, safeY)
+        }
+    }
+
+    private fun clampX(x: Int, bubbleSize: Int): Int {
+        val maxX = (resources.displayMetrics.widthPixels - bubbleSize).coerceAtLeast(0)
+        return x.coerceIn(0, maxX)
+    }
+
+    private fun clampY(y: Int, bubbleSize: Int): Int {
+        val maxY = (resources.displayMetrics.heightPixels - bubbleSize).coerceAtLeast(0)
+        return y.coerceIn(0, maxY)
     }
 
     private fun hasUsageStatsPermission(): Boolean {

@@ -25,6 +25,8 @@ interface UserDataRepository {
 
     suspend fun setBubbleSnapToEdge(snapToEdge: Boolean)
 
+    suspend fun setBubblePosition(x: Int, y: Int)
+
     suspend fun setTileActionMode(mode: com.vamsi3.android.screentranslator.core.data.model.TileActionMode)
 
     suspend fun setTranslatorDismissAction(action: com.vamsi3.android.screentranslator.core.data.model.TranslatorDismissAction)

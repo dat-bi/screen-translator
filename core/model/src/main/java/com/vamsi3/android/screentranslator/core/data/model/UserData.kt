@@ -14,6 +14,8 @@ data class UserData(
     val bubbleIconColor: String = "#FFFFFF",
     val bubbleSizeDp: Int = 56,
     val bubbleSnapToEdge: Boolean = true,
+    val bubblePositionX: Int = 0,
+    val bubblePositionY: Int = 100,
     val tileActionMode: TileActionMode = TileActionMode.SCREENSHOT,
     val translatorDismissAction: TranslatorDismissAction = TranslatorDismissAction.NOTHING,
 )

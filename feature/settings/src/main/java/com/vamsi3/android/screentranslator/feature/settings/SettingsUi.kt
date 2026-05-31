@@ -216,7 +216,7 @@ fun FloatingBubbleSection(
     onChangeTranslatorDismissAction: (TranslatorDismissAction) -> Unit,
     onBubbleRestart: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var advancedExpanded by remember { mutableStateOf(true) }
 
     Surface(
         modifier = Modifier
@@ -226,89 +226,110 @@ fun FloatingBubbleSection(
         shadowElevation = 8.dp,
         shape = RoundedCornerShape(8.dp),
     ) {
-        Column {
-            // Top row: Toggle
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
             Row(
-                modifier = Modifier
-                    .padding(start = 16.dp, top = 12.dp, bottom = 8.dp, end = 8.dp)
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(Color(android.graphics.Color.parseColor(backgroundColor)))
+                            .border(2.dp, Color(android.graphics.Color.parseColor(borderColor)), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "A",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(android.graphics.Color.parseColor(iconColor))
+                        )
+                    }
+                    Column {
+                        Text("Floating Bubble", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (isBubbleRunning) "On screen now" else "Hidden",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(
+                    checked = isBubbleRunning,
+                    onCheckedChange = onBubbleToggle,
+                )
+            }
+
+            HorizontalDivider()
+
+            BubbleSizeControl(
+                bubbleSizeDp = bubbleSizeDp,
+                onChangeBubbleSizeDp = { size ->
+                    onChangeBubbleSizeDp(size)
+                    if (isBubbleRunning) onBubbleRestart()
+                }
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onChangeSnapToEdge(!snapToEdge) }
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Floating Bubble", style = MaterialTheme.typography.titleMedium)
+                    Text("Snap to Edge", style = MaterialTheme.typography.bodyLarge)
                     Text(
-                        "Show draggable translation button on screen",
+                        if (snapToEdge) "Snaps after dragging and saves that edge" else "Stays exactly where you drop it",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
-                    checked = isBubbleRunning,
-                    onCheckedChange = onBubbleToggle,
-                    thumbContent = {
-                        Text(
-                            text = if (isBubbleRunning) "ON" else "OFF",
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(2.dp)
-                        )
-                    }
+                    checked = snapToEdge,
+                    onCheckedChange = onChangeSnapToEdge,
                 )
             }
 
-            // Customization header (clickable to expand)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+            TranslatorDismissActionControl(
+                translatorDismissAction = translatorDismissAction,
+                onChangeTranslatorDismissAction = onChangeTranslatorDismissAction
+            )
+
+            TextButton(
+                onClick = { advancedExpanded = !advancedExpanded },
+                modifier = Modifier.align(Alignment.End)
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        "Customize Bubble",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        "Size, colours, and behaviour",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                }
+                Text(if (advancedExpanded) "Hide Button Style" else "Edit Button Style")
                 Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    imageVector = if (advancedExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
                 )
             }
 
-            // Expandable customization content
             AnimatedVisibility(
-                visible = expanded,
+                visible = advancedExpanded,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Bubble Size
-                    BubbleSizeControl(
-                        bubbleSizeDp = bubbleSizeDp,
-                        onChangeBubbleSizeDp = { size ->
-                            onChangeBubbleSizeDp(size)
-                            if (isBubbleRunning) onBubbleRestart()
-                        }
-                    )
-
                     HorizontalDivider()
-
-                    // Background Colour
                     BubbleColorControl(
-                        label = "Background Colour",
-                        description = "Customize bubble background",
+                        label = "Background",
+                        description = "Bubble fill colour",
                         color = backgroundColor,
                         onColorChange = { color ->
                             onChangeBackgroundColor(color)
@@ -316,12 +337,9 @@ fun FloatingBubbleSection(
                         }
                     )
 
-                    HorizontalDivider()
-
-                    // Border Colour
                     BubbleColorControl(
-                        label = "Border Colour",
-                        description = "Customize bubble border",
+                        label = "Border",
+                        description = "Outer ring colour",
                         color = borderColor,
                         onColorChange = { color ->
                             onChangeBorderColor(color)
@@ -329,57 +347,15 @@ fun FloatingBubbleSection(
                         }
                     )
 
-                    HorizontalDivider()
-
-                    // Icon Colour
                     BubbleColorControl(
-                        label = "Icon Colour",
-                        description = "Customize bubble icon tint",
+                        label = "Icon",
+                        description = "Translate icon colour",
                         color = iconColor,
                         onColorChange = { color ->
                             onChangeIconColor(color)
                             if (isBubbleRunning) onBubbleRestart()
                         }
                     )
-
-                    HorizontalDivider()
-
-                    // Snap to Edge
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Snap to Edge", style = MaterialTheme.typography.bodyLarge)
-                            Text(
-                                "Bubble snaps to screen edge after dragging",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(
-                            checked = snapToEdge,
-                            onCheckedChange = onChangeSnapToEdge,
-                            thumbContent = {
-                                Text(
-                                    text = if (snapToEdge) "ON" else "OFF",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(2.dp)
-                                )
-                            }
-                        )
-                    }
-
-                    HorizontalDivider()
-
-                    // Translator Dismiss Action
-                    TranslatorDismissActionControl(
-                        translatorDismissAction = translatorDismissAction,
-                        onChangeTranslatorDismissAction = onChangeTranslatorDismissAction
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }

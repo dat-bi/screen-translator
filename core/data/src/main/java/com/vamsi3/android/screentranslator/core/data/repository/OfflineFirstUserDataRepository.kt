@@ -36,6 +36,9 @@ class OfflineFirstUserDataRepository @Inject constructor(
     override suspend fun setBubbleSnapToEdge(snapToEdge: Boolean) =
         userPreferencesDataSource.setBubbleSnapToEdge(snapToEdge)
 
+    override suspend fun setBubblePosition(x: Int, y: Int) =
+        userPreferencesDataSource.setBubblePosition(x, y)
+
     override suspend fun setTileActionMode(mode: com.vamsi3.android.screentranslator.core.data.model.TileActionMode) =
         userPreferencesDataSource.setTileActionMode(mode)
 

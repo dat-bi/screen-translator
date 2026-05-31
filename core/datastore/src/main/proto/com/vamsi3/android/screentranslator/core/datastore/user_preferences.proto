@@ -31,4 +31,6 @@ message UserPreferencesProto {
     bool bubble_snap_to_edge = 9;
     TranslatorDismissAction translator_dismiss_action = 10;
     string bubble_icon_color = 11;
+    int32 bubble_position_x = 12;
+    int32 bubble_position_y = 13;
 }

@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.Log
-import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
@@ -205,27 +204,26 @@ class ScreenTranslatorAccessibilityService : AccessibilityService() {
     }
 
     private fun takeScreenshotAndTranslate() {
-        takeScreenshot(
-            Display.DEFAULT_DISPLAY,
-            application.mainExecutor,
-            object : TakeScreenshotCallback {
-                override fun onSuccess(screenshotResult: ScreenshotResult) {
-                    val bitmap = Bitmap.wrapHardwareBuffer(
-                        screenshotResult.hardwareBuffer,
-                        screenshotResult.colorSpace
-                    )
-                    if (bitmap == null) {
-                        showToast(R.string.translation_failed)
-                        return
-                    }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            startActivity(
+                packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                    action = ACTION_REQUEST_MEDIA_PROJECTION_SCREENSHOT
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                } ?: Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            )
+            return
+        }
 
-                    val file = writeBitmapToFile(bitmap)
-                    forwardScreenshotToTranslateApp(file)
-                }
-
-                override fun onFailure(i: Int) {
-                    showToast(R.string.translation_failed)
-                }
+        AccessibilityScreenshotCompat.takeScreenshot(
+            service = this,
+            onSuccess = { bitmap ->
+                val file = writeBitmapToFile(bitmap)
+                forwardScreenshotToTranslateApp(file)
+            },
+            onFailure = {
+                showToast(R.string.translation_failed)
             }
         )
     }
@@ -258,7 +256,6 @@ class ScreenTranslatorAccessibilityService : AccessibilityService() {
         val intent = Intent(Intent.ACTION_SEND)
             .setType(MIME_TYPE_JPEG)
             .setPackage(translateApp.packageName)
-            .setClassName(translateApp.packageName, translateApp.imageTranslateActivity)
             .setFlags(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION
                         or Intent.FLAG_ACTIVITY_NEW_DOCUMENT
@@ -268,6 +265,10 @@ class ScreenTranslatorAccessibilityService : AccessibilityService() {
                         or Intent.FLAG_ACTIVITY_NEW_TASK
             )
             .putExtra(Intent.EXTRA_STREAM, uri)
+
+        if (translateApp.imageTranslateActivity.isNotBlank()) {
+            intent.setClassName(translateApp.packageName, translateApp.imageTranslateActivity)
+        }
 
         try {
             startActivity(intent)
