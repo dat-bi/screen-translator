@@ -67,7 +67,6 @@ class BubbleOverlayService : Service() {
 
         // Translator app package names
         private val TRANSLATOR_PACKAGES = setOf(
-            "com.baidu.baidutranslate", // Baidu Translate
             "com.google.android.apps.translate", // Google Translate
             "com.google.ar.lens", // Google Lens (standalone)
             "com.google.android.googlequicksearchbox", // Google app (includes Lens)

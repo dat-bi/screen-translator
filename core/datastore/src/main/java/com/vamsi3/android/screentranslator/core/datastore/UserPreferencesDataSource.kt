@@ -38,7 +38,6 @@ class UserPreferencesDataSource @Inject constructor(
 
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE -> TranslateApp.DEEPL_TRANSLATE
                     UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO -> TranslateApp.NAVER_PAPAGO
-                    UserTranslateAppPreferenceProto.TRANSLATE_APP_BAIDU_TRANSLATE -> TranslateApp.BAIDU_TRANSLATE
                 },
                 bubbleBackgroundColor = it.bubbleBackgroundColor.ifEmpty { "#00000000" },
                 bubbleBorderColor = it.bubbleBorderColor.ifEmpty { "#4CAF50" },
@@ -98,7 +97,6 @@ class UserPreferencesDataSource @Inject constructor(
         userPreferencesProto.updateData {
             it.copy {
                 this.userTranslateAppPreference = when (translateApp) {
-                    TranslateApp.BAIDU_TRANSLATE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_BAIDU_TRANSLATE
                     TranslateApp.DEEPL_TRANSLATE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_DEEPL_TRANSLATE
                     TranslateApp.GOOGLE -> UserTranslateAppPreferenceProto.TRANSLATE_APP_GOOGLE
                     TranslateApp.NAVER_PAPAGO -> UserTranslateAppPreferenceProto.TRANSLATE_APP_NAVER_PAPAGO
